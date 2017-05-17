@@ -38,7 +38,6 @@ import twitter4j.StatusDeletionNotice;
 import twitter4j.StatusListener;
 import twitter4j.TwitterStream;
 import twitter4j.TwitterStreamFactory;
-import twitter4j.auth.AccessToken;
 import twitter4j.conf.ConfigurationBuilder;
 import twitter4j.json.DataObjectFactory;
 
@@ -53,12 +52,6 @@ public class TwitterSource extends AbstractSource
   private static final Logger logger =
       LoggerFactory.getLogger(TwitterSource.class);
 
-  /** Information necessary for accessing the Twitter API */
-  private String consumerKey;
-  private String consumerSecret;
-  private String accessToken;
-  private String accessTokenSecret;
-
   private String[] keywords;
 
   /** The actual Twitter stream. It's set up to collect raw JSON data */
@@ -71,10 +64,11 @@ public class TwitterSource extends AbstractSource
    */
   @Override
   public void configure(Context context) {
-    consumerKey = context.getString(TwitterSourceConstants.CONSUMER_KEY_KEY);
-    consumerSecret = context.getString(TwitterSourceConstants.CONSUMER_SECRET_KEY);
-    accessToken = context.getString(TwitterSourceConstants.ACCESS_TOKEN_KEY);
-    accessTokenSecret = context.getString(TwitterSourceConstants.ACCESS_TOKEN_SECRET_KEY);
+    /** Information necessary for accessing the Twitter API */
+    String consumerKey = context.getString(TwitterSourceConstants.CONSUMER_KEY_KEY);
+    String consumerSecret = context.getString(TwitterSourceConstants.CONSUMER_SECRET_KEY);
+    String accessToken = context.getString(TwitterSourceConstants.ACCESS_TOKEN_KEY);
+    String accessTokenSecret = context.getString(TwitterSourceConstants.ACCESS_TOKEN_SECRET_KEY);
 
     String keywordString = context.getString(TwitterSourceConstants.KEYWORDS_KEY, "");
     keywords = keywordString.split(",");
@@ -90,6 +84,9 @@ public class TwitterSource extends AbstractSource
     cb.setJSONStoreEnabled(true);
     cb.setIncludeEntitiesEnabled(true);
 
+    logger.debug("Setting up Twitter sample stream using consumer key {} and" +
+          " access token {}", new String[] { consumerKey, accessToken });
+	  
     twitterStream = new TwitterStreamFactory(cb.build()).getInstance();
   }
 
@@ -122,9 +119,9 @@ public class TwitterSource extends AbstractSource
       }
 
       // This listener will ignore everything except for new tweets
-      public void onDeletionNotice(StatusDeletionNotice statusDeletionNotice) {}
-      public void onTrackLimitationNotice(int numberOfLimitedStatuses) {}
-      public void onScrubGeo(long userId, long upToStatusId) {}
+      public void onDeletionNotice(StatusDeletionNotice statusDeletionNotice) { /** no-op */ }
+      public void onTrackLimitationNotice(int numberOfLimitedStatuses) { /** no-op */ }
+      public void onScrubGeo(long userId, long upToStatusId) { /** no-op */ }
       
       public void onException(Exception ex) {
     	  logger.error("Stream Error ", ex);
@@ -144,8 +141,7 @@ public class TwitterSource extends AbstractSource
       }
     };
 
-    logger.debug("Setting up Twitter sample stream using consumer key {} and" +
-          " access token {}", new String[] { consumerKey, accessToken });
+
     // Set up the stream's listener (defined above),
     twitterStream.addListener(listener);
 

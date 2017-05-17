@@ -41,9 +41,6 @@ public class KinesisSink extends AbstractSink implements Configurable {
 	private static final int DEFAULT_STREAM_SIZE = 2;
 	private static final Logger logger = LoggerFactory.getLogger(KinesisSink.class);
 	
-	private String awsAccessKey;
-	private String awsSecretKey;
-
 	private String partitionKey;
 	private String streamName;
 	private Integer streamsize;
@@ -88,8 +85,8 @@ public class KinesisSink extends AbstractSink implements Configurable {
 
 	@Override
 	public void configure(Context context) {
-		awsAccessKey = context.getString("aws.accesskey");
-		awsSecretKey = context.getString("aws.secretkey");
+		String awsAccessKey = context.getString("aws.accesskey");
+		String awsSecretKey = context.getString("aws.secretkey");
 
 		partitionKey = context.getString("aws.partitionkey");
 		streamName = context.getString("aws.streamname");
@@ -165,13 +162,13 @@ public class KinesisSink extends AbstractSink implements Configurable {
 
 				String streamStatus = describeStreamResponse.getStreamDescription().getStreamStatus();
 				logger.info(" {} - current state: " , streamStatus);
-				if (streamStatus.equals("ACTIVE")) {
+				if ("ACTIVE".equals(streamStatus)) {
 					sinkCounter.incrementConnectionCreatedCount();
 					return;
 				}
 			} catch (AmazonServiceException ase) {
 				sinkCounter.incrementConnectionFailedCount();
-				if (ase.getErrorCode().equalsIgnoreCase("ResourceNotFoundException") == false) {
+				if (!"ResourceNotFoundException".equalsIgnoreCase(ase.getErrorCode())) {
 					throw ase;
 				}
 				throw new RuntimeException("Stream " + myStreamName + " never went active");
